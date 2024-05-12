@@ -7,7 +7,7 @@ public class CityInfoContext(DbContextOptions<CityInfoContext> options) : DbCont
 {
     public DbSet<City> Cities { get; set; }
     
-    public DbSet<PointOfInterest> PointOfInterests { get; set; }
+    public DbSet<PointOfInterest> PointsOfInterest { get; set; }
 
     // protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     // {
