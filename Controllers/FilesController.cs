@@ -11,7 +11,7 @@ public class FilesController(FileExtensionContentTypeProvider fileExtensionConte
     [HttpGet("{fileId}")]
     public ActionResult GetFile(string fileId)
     {
-        var pathToFile = "TestFile.txt";
+        const string pathToFile = "TestFile.txt";
 
         if (!System.IO.File.Exists(pathToFile))
         {
