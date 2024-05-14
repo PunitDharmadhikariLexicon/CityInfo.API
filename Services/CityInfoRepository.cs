@@ -1,5 +1,6 @@
 using CityInfo.API.DbContexts;
 using CityInfo.API.Entities;
+using CityInfo.API.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace CityInfo.API.Services;
@@ -11,6 +12,42 @@ public class CityInfoRepository(CityInfoContext context) : ICityInfoRepository
     public async Task<IEnumerable<City>> GetCitiesAsync()
     {
         return await _context.Cities.OrderBy(city => city.Name).ToListAsync();
+    }
+    
+    public async Task<(IEnumerable<City>, PaginationMetadata)> GetCitiesAsync(
+        string? name,
+        string? searchQuery,
+        int pageNumber,
+        int pageSize
+    ) {
+        var collection = _context.Cities as IQueryable<City>;
+
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            name = name.Trim();
+            collection = collection.Where(city => city.Name == name);
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchQuery))
+        {
+            searchQuery = searchQuery.Trim();
+            collection = collection.Where(city =>
+                city.Name.Contains(searchQuery) || (city.Description != null && city.Description.Contains(searchQuery)));
+        }
+
+        var totalItemCount = await collection.CountAsync();
+
+        var paginationMetadata = new PaginationMetadata(
+            totalItemCount, pageSize, pageNumber);
+        
+
+        var result = await collection
+            .OrderBy(city => city.Name)
+            .Skip(pageSize * (pageNumber - 1))
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (result, paginationMetadata);
     }
 
     public async Task<City?> GetCityAsync(int cityId, bool includePointsOfInterest)
@@ -52,10 +89,7 @@ public class CityInfoRepository(CityInfoContext context) : ICityInfoRepository
     public async Task AddPointOfInterestForCityAsync(int cityId, PointOfInterest pointOfInterest)
     {
         var city = await GetCityAsync(cityId, false);
-        if (city != null)
-        {
-            city.PointsOfInterest.Add(pointOfInterest);
-        }
+        city?.PointsOfInterest.Add(pointOfInterest);
     }
 
     public void DeletePointOfInterest(PointOfInterest pointOfInterest)
